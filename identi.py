@@ -112,6 +112,6 @@ if __name__ == '__main__':
     print '* ERRORS SCANNING PORTS: *'
     print '**************************'
     print
-    for each_list in master_results:
+    for each_list in master_errors:
         for each_result in each_list:
             print '\t- {0}, '.format(each_result),
