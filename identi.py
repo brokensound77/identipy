@@ -86,7 +86,7 @@ def do_threaded_work(host, port, query_port):
         t.start()
 
     # 65000 - 65535
-    t2 = Thread(target=scan_bottom, args=(host, port, query_port))
+    t2 = Thread(target=scan_top, args=(host, port, query_port))
     t2.start()
 
     t1.join()
