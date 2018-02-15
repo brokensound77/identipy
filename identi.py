@@ -18,12 +18,19 @@ def scan_port_group(host, port, query_port, range_hundreds):
     this_range = range_hundreds * 1000
 
     not_error = []
+    failures = []
     for i in xrange(this_range, this_range + 999):
-        client.send(str(i) + ', ' + query_port + '\x0d\x0a')
-        results = str(client.recv(4096))
+        try:
+            client.send(str(i) + ', ' + query_port + '\x0d\x0a')
+            results = str(client.recv(4096))
+        except Exception:
+            failures.append(i)
+            continue
         if 'ERROR' not in results:
             not_error.append(results.strip())
     master_results.append(not_error)
+    master_errors.append(failures)
+    print '[+] scanned range: {0}-{1}'.format(this_range, this_range + 999)
 
 
 def do_threaded_work(host, port, query_port):
@@ -43,6 +50,7 @@ def do_threaded_work(host, port, query_port):
 if __name__ == '__main__':
     print '[+] starting scan on {0} {1} for connections to {2}'.format(args.host, args.port, args.query_port)
     master_results = []
+    master_errors = []
     do_threaded_work(args.host, args.port, args.query_port)
     print '***********'
     print '* RESULTS *'
@@ -51,3 +59,11 @@ if __name__ == '__main__':
     for each_list in master_results:
         for each_result in each_list:
             print '\t- {0}'.format(each_result)
+
+    print '**************************'
+    print '* ERRORS SCANNING PORTS: *'
+    print '**************************'
+    print
+    for each_list in master_results:
+        for each_result in each_list:
+            print '\t- {0}, '.format(each_result),
