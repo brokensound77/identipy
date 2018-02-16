@@ -3,115 +3,104 @@
 import socket
 import argparse
 from threading import Thread
-
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('host', help='host to scan')
-parser.add_argument('query_port', help='port which the scan will query for connections (ex: 22)')
+parser.add_argument('-q', '--query_port', nargs='+',
+                    help='port(s) which the scan will query for connections (ex: 22 or 21 22 23)')
 parser.add_argument('-p', '--port', default='113', type=int, help='port to scan (default: 113)')
+parser.add_argument('-a', '--all-ports', action='store_true', help='queries ALL ports!')
 args = parser.parse_args()
 
 
-def scan_port_group(host, port, query_port, range_hundreds):
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
-    this_range = range_hundreds * 1000
-
+def enum_port(host, port, query_port):
     not_error = []
     failures = []
-    for i in xrange(this_range, this_range + 999):
-        try:
-            client.send(str(i) + ', ' + query_port + '\x0d\x0a')
-            results = str(client.recv(4096))
-        except Exception:
-            failures.append(i)
-            continue
-        if 'ERROR' not in results:
-            not_error.append(results.strip())
-    master_results.append(not_error)
-    master_errors.append(failures)
-    print '[+] scanned range: {0}-{1}'.format(this_range, this_range + 999)
+    try:
+        client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client1.connect((host, query_port))
+        local_port = client1.getsockname()[1]
+    except socket.error:
+        #failures.append('{0:>5}: connection refused'.format(query_port))
+        master_errors.append('{0:>5}: connection refused'.format(query_port))
+        return
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((host, port))
+    except socket.error:
+        print 'ident port NOT open!: {0}'.format(port)
+        return
+
+    try:
+        client.send(str(query_port) + ',' + str(local_port) + '\x0d\x0a')
+        results = str(client.recv(4096))
+    except Exception:
+        print 'fail'
+        #failures.append('{0:>5}:'.format(query_port))
+        master_errors.append('{0:>5}:'.format(query_port))
+        client1.close()
+        client.close()
+        return
+    if 'ERROR' not in results:
+        #not_error.append(results.strip())
+        master_results.append(results.strip())
+    client1.close()
+    client.close()
+    #master_results.append(not_error)
+    # print '[+] scanned range: {0}-{1}'.format(65000, 65535)
 
 
-def scan_bottom(host, port, query_port):
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
-
-    not_error = []
-    failures = []
-    for i in xrange(1, 999):
-        try:
-            client.send(str(i) + ', ' + query_port + '\x0d\x0a')
-            results = str(client.recv(4096))
-        except Exception:
-            failures.append(i)
-            continue
-        if 'ERROR' not in results:
-            not_error.append(results.strip())
-    master_results.append(not_error)
-    master_errors.append(failures)
-    print '[+] scanned range: {0}-{1}'.format(1, 999)
-
-
-def scan_top(host, port, query_port):
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
-
-    not_error = []
-    failures = []
-    for i in xrange(65000, 65536):
-        try:
-            client.send(str(i) + ', ' + query_port + '\x0d\x0a')
-            results = str(client.recv(4096))
-        except Exception:
-            failures.append(i)
-            continue
-        if 'ERROR' not in results:
-            not_error.append(results.strip())
-    master_results.append(not_error)
-    master_errors.append(failures)
-    print '[+] scanned range: {0}-{1}'.format(65000, 65535)
-
-
-def do_threaded_work(host, port, query_port):
+def do_threaded_work(host, port, query_ports):
     threads = []
-    # 1 - 999
-    t1 = Thread(target=scan_bottom, args=(host, port, query_port))
-    t1.start()
-
-    # 1000 - 64999
-    for i in xrange(1, 65):
-        t = Thread(target=scan_port_group, args=(host, port, query_port, i))
+    for i in query_ports:
+        t = Thread(target=enum_port, args=(host, port, int(i)))
         threads.append(t)
         t.start()
-
-    # 65000 - 65535
-    t2 = Thread(target=scan_top, args=(host, port, query_port))
-    t2.start()
-
-    t1.join()
     for thread in threads:
         thread.join()
-    t2.join()
+
+
+def print_results(suppress=False):
+    print '[*] Results:'
+    for each_result in master_results:
+        #for each_result in each_list:
+        tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
+        result_port = str(tmp_result[0].split(',')[0]).strip()
+        result_username = tmp_result[3]
+        print '\t{0:>5}: {1}'.format(result_port, result_username)
+
+    if suppress:
+        return
+    print '[!] Errors:'
+    for each_result in master_errors:
+        #for each_result in each_list:
+        print '\t{0}'.format(each_result)
 
 
 if __name__ == '__main__':
-    print '[+] starting scan on {0} {1} for connections to {2}'.format(args.host, args.port, args.query_port)
+    if args.query_port is not None and len(args.query_port) == 0 and not args.all_ports:
+        print '[!] you must specify at least one port or -a'
+        exit(2)
     master_results = []
     master_errors = []
-    do_threaded_work(args.host, args.port, args.query_port)
-    print '***********'
-    print '* RESULTS *'
-    print '***********'
-    print
-    for each_list in master_results:
-        for each_result in each_list:
-            print '\t- {0}'.format(each_result)
-
-    print '**************************'
-    print '* ERRORS SCANNING PORTS: *'
-    print '**************************'
-    print
-    for each_list in master_errors:
-        for each_result in each_list:
-            print '\t- {0}, '.format(each_result),
+    if args.all_ports:
+        query_ports = map(lambda x: str(x), range(1, 65536))
+        q_string = '1-65535'
+    else:
+        query_ports = args.query_port
+        q_string = ' '.join(query_ports)
+    print '[+] starting scan on {0} {1} for connections to {2}'.format(args.host, args.port, q_string)
+    try:
+        do_threaded_work(args.host, args.port, query_ports)
+    except KeyboardInterrupt:
+        print 'Interrupted! Printing results:'
+        print_results(suppress=True)
+        print '[!] errors suppressed on interrupt!'
+        exit(1)
+    if args.all_ports:
+        print_results(suppress=True)
+        print'[!] errors suppressed on full scan!'
+    else:
+        print_results()
+    exit(0)
