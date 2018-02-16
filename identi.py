@@ -55,8 +55,13 @@ def enum_port(host, port, query_port, verbose=0):
     try:
         client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client1.connect((host, query_port))
-        banner = client1.recv(4096)
         local_port = client1.getsockname()[1]
+        client1.settimeout(1)
+        client1.send('\x0d\x0a')
+        try:
+            banner = client1.recv(4096)
+        except socket.error:
+            banner = ''
     except socket.error:
         master_errors.append('{0:>5}: connection refused'.format(query_port))
         return
@@ -103,7 +108,7 @@ def print_results(suppress=False, verbose=0):
             tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
             result_port = str(tmp_result[0].split(',')[0]).strip()
             result_username = tmp_result[3]
-            result_banner = master_banners.get(result_port, default='')
+            result_banner = master_banners.get(result_port, '')
             print '\t{0:>5}: {1:<20} {2}'.format(result_port, result_username, result_banner)
 
     if suppress:
