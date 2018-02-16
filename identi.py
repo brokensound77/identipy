@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# zeroex00.com
+# rfc1413
+
 import socket
 import argparse
 from threading import Thread
@@ -50,7 +53,7 @@ def enum_port(host, port, query_port):
         client1.close()
         client.close()
         return
-    if 'ERROR' not in results:
+    if 'USERID' in results:
         master_results.append(results.strip())
     client1.close()
     client.close()
