@@ -7,9 +7,8 @@ from threading import Thread
 
 parser = argparse.ArgumentParser()
 parser.add_argument('host', help='host to scan')
-parser.add_argument('-q', '--query_port', nargs='+',
-                    help='port(s) which the scan will query for connections (ex: 22 or 21 22 23)')
-parser.add_argument('-p', '--port', default='113', type=int, help='port to scan (default: 113)')
+parser.add_argument('-q', '--query_port', nargs='+', help='port(s) which the scan will query(ex: 22 or 21 22 23)')
+parser.add_argument('-p', '--port', default='113', type=int, help='port IDENT service is listening on (default: 113)')
 parser.add_argument('-a', '--all-ports', action='store_true', help='queries ALL ports!')
 args = parser.parse_args()
 
