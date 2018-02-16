@@ -15,15 +15,15 @@ args = parser.parse_args()
 
 
 def enum_port(host, port, query_port):
-    not_error = []
-    failures = []
     try:
         client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client1.connect((host, query_port))
         local_port = client1.getsockname()[1]
     except socket.error:
-        #failures.append('{0:>5}: connection refused'.format(query_port))
         master_errors.append('{0:>5}: connection refused'.format(query_port))
+        return
+    except OverflowError:
+        master_errors.append('{0:>5}: invalid port'.format(query_port))
         return
     try:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -31,24 +31,22 @@ def enum_port(host, port, query_port):
     except socket.error:
         print 'ident port NOT open!: {0}'.format(port)
         return
+    except OverflowError:
+        print 'ident port invalid!: {0}'.format(port)
+        return
 
     try:
         client.send(str(query_port) + ',' + str(local_port) + '\x0d\x0a')
         results = str(client.recv(4096))
-    except Exception:
-        print 'fail'
-        #failures.append('{0:>5}:'.format(query_port))
-        master_errors.append('{0:>5}:'.format(query_port))
+    except Exception as e:
+        master_errors.append('{0:>5}: e'.format(query_port, e))
         client1.close()
         client.close()
         return
     if 'ERROR' not in results:
-        #not_error.append(results.strip())
         master_results.append(results.strip())
     client1.close()
     client.close()
-    #master_results.append(not_error)
-    # print '[+] scanned range: {0}-{1}'.format(65000, 65535)
 
 
 def do_threaded_work(host, port, query_ports):
@@ -64,7 +62,6 @@ def do_threaded_work(host, port, query_ports):
 def print_results(suppress=False):
     print '[*] Results:'
     for each_result in master_results:
-        #for each_result in each_list:
         tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
         result_port = str(tmp_result[0].split(',')[0]).strip()
         result_username = tmp_result[3]
@@ -74,7 +71,6 @@ def print_results(suppress=False):
         return
     print '[!] Errors:'
     for each_result in master_errors:
-        #for each_result in each_list:
         print '\t{0}'.format(each_result)
 
 
