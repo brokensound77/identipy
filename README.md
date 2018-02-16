@@ -30,7 +30,7 @@ optional arguments:
             80: connection refused
   ```
   
-  ## scanning ALL ports
+  ## Scanning ALL ports
   
   ```
   python identi.py 10.1.1.236 -a
