@@ -3,7 +3,7 @@
 import socket
 import argparse
 from threading import Thread
-import time
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('host', help='host to scan')
