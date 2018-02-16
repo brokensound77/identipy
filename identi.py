@@ -13,16 +13,36 @@ parser.add_argument('host', help='host to scan')
 parser.add_argument('-q', '--query-port', nargs='+', help='port(s) which the scan will query(ex: 22 or 21 22 23)')
 parser.add_argument('-p', '--port', default='113', type=int, help='port IDENT service is listening on (default: 113)')
 parser.add_argument('-a', '--all-ports', action='store_true', help='queries ALL ports!')
+parser.add_argument('-v', '--verbose', action='count', default=0,
+                    help='increase verbosity - v: shows full success responses; vv: shows all open port responses')
 args = parser.parse_args()
 
 
-def check_ident_port(host, port):
+def clean_host(host):
+    if host.startswith('http://'):
+        tmp_host = host[7:]
+    elif host.startswith('https://'):
+        tmp_host = host[8:]
+    else:
+        tmp_host = host
+    return tmp_host
+
+
+def resolve_host(host):
+    try:
+        ip = socket.gethostbyname(host)
+    except socket.error:
+        return '?.?.?.?'
+    return ip
+
+
+def check_ident_port(host, port, ip):
     try:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.settimeout(5)
         client.connect((host, port))
     except socket.error:
-        print '[!] {0} is not listening on port: {1}'.format(host, port)
+        print '[!] {0} ({1}) is not listening on port: {2}'.format(host, ip, port)
         return False
     except OverflowError:
         print '[!] Invalid port!: {0}'.format(port)
@@ -31,7 +51,7 @@ def check_ident_port(host, port):
     return True
 
 
-def enum_port(host, port, query_port):
+def enum_port(host, port, query_port, verbose=0):
     try:
         client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client1.connect((host, query_port))
@@ -53,29 +73,34 @@ def enum_port(host, port, query_port):
         client1.close()
         client.close()
         return
-    if ': USERID :' in results:
+    if verbose > 1:
+        master_results.append(results.strip())
+    elif ': USERID :' in results:
         master_results.append(results.strip())
     client1.close()
     client.close()
 
 
-def do_threaded_work(host, port, query_ports):
+def do_threaded_work(host, port, q_ports, verbose=0):
     threads = []
-    for i in query_ports:
-        t = Thread(target=enum_port, args=(host, port, int(i)))
+    for i in q_ports:
+        t = Thread(target=enum_port, args=(host, port, int(i), verbose))
         threads.append(t)
         t.start()
     for thread in threads:
         thread.join()
 
 
-def print_results(suppress=False):
+def print_results(suppress=False, verbose=0):
     print '[*] Results:'
     for each_result in master_results:
-        tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
-        result_port = str(tmp_result[0].split(',')[0]).strip()
-        result_username = tmp_result[3]
-        print '\t{0:>5}: {1}'.format(result_port, result_username)
+        if verbose > 0:
+            print '\t{0}'.format(each_result)
+        else:
+            tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
+            result_port = str(tmp_result[0].split(',')[0]).strip()
+            result_username = tmp_result[3]
+            print '\t{0:>5}: {1}'.format(result_port, result_username)
 
     if suppress:
         return
@@ -91,7 +116,9 @@ if __name__ == '__main__':
     if args.query_port is not None and len(args.query_port) == 0 and not args.all_ports:
         print '[!] you must specify at least one port or -a'
         exit(2)
-    if not check_ident_port(args.host, args.port):
+    hostname = clean_host(args.host)
+    ip_addr = resolve_host(hostname)
+    if not check_ident_port(args.host, args.port, ip_addr):
         print '[!] Exiting...'
         exit(1)
     master_results = []
@@ -102,17 +129,17 @@ if __name__ == '__main__':
     else:
         query_ports = args.query_port
         q_string = ' '.join(query_ports)
-    print '[+] starting scan on {0} {1} for connections to {2}'.format(args.host, args.port, q_string)
+    print '[+] starting scan on {0} ({1}) {2} for connections to {3}'.format(hostname, ip_addr, args.port, q_string)
     try:
-        do_threaded_work(args.host, args.port, query_ports)
+        do_threaded_work(args.host, args.port, query_ports, verbose=args.verbose)
     except KeyboardInterrupt:
         print 'Interrupted! Printing results:'
-        print_results(suppress=True)
+        print_results(suppress=True, verbose=args.verbose)
         print '[!] Errors suppressed on interrupt!'
         exit(1)
     if args.all_ports:
-        print_results(suppress=True)
+        print_results(suppress=True, verbose=args.verbose)
         print'[!] Errors suppressed on full scan!'
     else:
-        print_results()
+        print_results(verbose=args.verbose)
     exit(0)
