@@ -101,8 +101,10 @@ def print_results(suppress=False, verbose=0):
             tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
             result_port = str(tmp_result[0].split(',')[0]).strip()
             result_username = tmp_result[3]
-            result_banner = str(tmp_result[4]).strip()
-            print '\t{0:>5}: {1}'.format(result_port, result_username)
+            result_banner = ''
+            if len(tmp_result) > 4:
+                result_banner = str(tmp_result[4]).strip()
+            print '\t{0:>5}: {1:<20} {2}'.format(result_port, result_username, result_banner)
 
     if suppress:
         return
