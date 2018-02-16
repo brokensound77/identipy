@@ -83,8 +83,8 @@ def print_results(suppress=False):
     for each_result in master_errors:
         print '\t{0}'.format(each_result)
     if len(master_results) == 0 and len(master_errors) == 0:
-        print ('[+] A lack of results AND errors could mean that the specified IDENT port ({0}) is not actually '
-               'running the IDENT service')
+        print ('[+] A lack of results AND errors could mean that the specified IDENT port is not actually running the '
+               'IDENT service')
 
 
 if __name__ == '__main__':
