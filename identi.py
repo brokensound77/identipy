@@ -75,9 +75,11 @@ def enum_port(host, port, query_port, verbose=0):
         client.close()
         return
     if verbose > 1:
-        master_results.append(results.strip() + ' ' + banner)
+        master_results.append(results.strip())
+        master_banners[str(query_port)] = str(banner)
     elif ': USERID :' in results:
-        master_results.append(results.strip() + ':' + banner)
+        master_results.append(results.strip())
+        master_banners[str(query_port)] = str(banner)
     client1.close()
     client.close()
 
@@ -101,9 +103,7 @@ def print_results(suppress=False, verbose=0):
             tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
             result_port = str(tmp_result[0].split(',')[0]).strip()
             result_username = tmp_result[3]
-            result_banner = ''
-            if len(tmp_result) > 4:
-                result_banner = str(tmp_result[4]).strip()
+            result_banner = master_banners.get(result_port, default='')
             print '\t{0:>5}: {1:<20} {2}'.format(result_port, result_username, result_banner)
 
     if suppress:
@@ -126,6 +126,7 @@ if __name__ == '__main__':
         print '[!] Exiting...'
         exit(1)
     master_results = []
+    master_banners = {}
     master_errors = []
     if args.all_ports:
         query_ports = map(lambda x: str(x), range(1, 65536))
