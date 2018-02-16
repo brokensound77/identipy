@@ -53,7 +53,7 @@ def enum_port(host, port, query_port):
         client1.close()
         client.close()
         return
-    if 'USERID' in results:
+    if ': USERID :' in results:
         master_results.append(results.strip())
     client1.close()
     client.close()
@@ -82,6 +82,9 @@ def print_results(suppress=False):
     print '[!] Errors:'
     for each_result in master_errors:
         print '\t{0}'.format(each_result)
+    if len(master_results) == 0 and len(master_errors) == 0:
+        print ('[+] A lack of results AND errors could mean that the specified IDENT port ({0}) is not actually '
+               'running the IDENT service')
 
 
 if __name__ == '__main__':
