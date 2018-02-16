@@ -13,6 +13,21 @@ parser.add_argument('-a', '--all-ports', action='store_true', help='queries ALL 
 args = parser.parse_args()
 
 
+def check_ident_port(host, port):
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.settimeout(5)
+        client.connect((host, port))
+    except socket.error:
+        print '[!] {0} is not listening on port: {1}'.format(host, port)
+        return False
+    except OverflowError:
+        print '[!] Invalid port!: {0}'.format(port)
+        return False
+    client.close()
+    return True
+
+
 def enum_port(host, port, query_port):
     try:
         client1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -24,15 +39,8 @@ def enum_port(host, port, query_port):
     except OverflowError:
         master_errors.append('{0:>5}: invalid port'.format(query_port))
         return
-    try:
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
-    except socket.error:
-        print 'ident port NOT open!: {0}'.format(port)
-        return
-    except OverflowError:
-        print 'ident port invalid!: {0}'.format(port)
-        return
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
 
     try:
         client.send(str(query_port) + ',' + str(local_port) + '\x0d\x0a')
@@ -77,6 +85,9 @@ if __name__ == '__main__':
     if args.query_port is not None and len(args.query_port) == 0 and not args.all_ports:
         print '[!] you must specify at least one port or -a'
         exit(2)
+    if not check_ident_port(args.host, args.port):
+        print '[!] Exiting...'
+        exit(1)
     master_results = []
     master_errors = []
     if args.all_ports:
