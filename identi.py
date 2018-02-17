@@ -102,7 +102,7 @@ def do_threaded_work(host, port, q_ports, verbose=0):
 def print_results(suppress=False, verbose=0):
     print '[*] Results:'
     if verbose > 0:
-        print '\tRaw responses || Banners'
+        print '\t(VERBOSE: Raw responses || Banners)'
     elif verbose == 0:
         print '\t{0:>5}  {1:<20} {2}'.format('Port', 'Username', 'Banner')
         print '\t{0:>5}  {1:<20} {2}'.format('----', '--------', '------')
