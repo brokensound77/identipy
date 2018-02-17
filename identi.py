@@ -104,8 +104,8 @@ def print_results(suppress=False, verbose=0):
     if verbose > 0:
         print '\tRaw responses || Banners'
     elif verbose == 0:
-        print '\t{:>5}  {1:<20} {2}'.format('Port', 'Username', 'Banner')
-        print '\t{:>5}  {1:<20} {2}'.format('----', '--------', '------')
+        print '\t{0:>5}  {1:<20} {2}'.format('Port', 'Username', 'Banner')
+        print '\t{0:>5}  {1:<20} {2}'.format('----', '--------', '------')
     for each_result in master_results:
         tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
         result_port = str(tmp_result[0].split(',')[0]).strip()
