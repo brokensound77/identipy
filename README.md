@@ -1,6 +1,6 @@
 # identipy
 
-Hopefully no one is still running IDENT services wide open, but if they are, it can be a great tool for red teams during penetration testing. For full details, go here: 
+Hopefully no one is still running IDENT services wide open, but if they are, it can be a useful tool for red teams to gather info during penetration testing. For full details, go here: _coming soon..._
 
 ## Usage
 
