@@ -71,7 +71,7 @@ def enum_port(host, port, query_port, verbose=0):
         client1.settimeout(1)
         client1.send('\x0d\x0a')
         try:
-            banner = client1.recv(4096)
+            banner = str(client1.recv(4096)).strip()
         except socket.error:
             banner = ''
     except Exception as e:
