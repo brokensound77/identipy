@@ -101,14 +101,19 @@ def do_threaded_work(host, port, q_ports, verbose=0):
 
 def print_results(suppress=False, verbose=0):
     print '[*] Results:'
+    if verbose > 0:
+        print '\tRaw responses || Banners'
+    elif verbose == 0:
+        print '\t{:>5}  {1:<20} {2}'.format('Port', 'Username', 'Banner')
+        print '\t{:>5}  {1:<20} {2}'.format('----', '--------', '------')
     for each_result in master_results:
+        tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
+        result_port = str(tmp_result[0].split(',')[0]).strip()
+        result_username = tmp_result[3]
+        result_banner = master_banners.get(result_port, '')
         if verbose > 0:
-            print '\t{0}'.format(each_result)
+            print '\t{0} || {1}'.format(each_result, result_banner)
         else:
-            tmp_result = each_result.split(':')  # ports, USERID, UNIX, username
-            result_port = str(tmp_result[0].split(',')[0]).strip()
-            result_username = tmp_result[3]
-            result_banner = master_banners.get(result_port, '')
             print '\t{0:>5}: {1:<20} {2}'.format(result_port, result_username, result_banner)
 
     if suppress:
