@@ -37,12 +37,13 @@ def resolve_host(host):
 
 
 def check_ident_port(host, port, ip):
+    print '[+] Checking if {0} ({1}) is listening on port: {2}'.format(host, ip, port)
     try:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.settimeout(5)
         client.connect((host, port))
     except socket.error:
-        print '[!] {0} ({1}) is not listening on port: {2}'.format(host, ip, port)
+        print '[!] {0} ({1}) is not listening on port: {2}!'.format(host, ip, port)
         return False
     except OverflowError:
         print '[!] Invalid port!: {0}'.format(port)
@@ -127,7 +128,7 @@ def print_results(suppress=False, verbose=0):
 
 
 if __name__ == '__main__':
-    if args.query_port is not None and len(args.query_port) == 0 and not args.all_ports:
+    if not args.query_port and not args.all_ports:
         print '[!] you must specify at least one port or -a'
         exit(2)
     hostname = clean_host(args.host)
