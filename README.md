@@ -60,7 +60,7 @@ optional arguments:
           (VERBOSE:Raw responses || Banners)
            2222 , 53282 : USERID : OTHER : root || SSH-2.0-OpennSSH_4.2p1 Debian-8 
             113 , 54716 : USERID : OTHER : 99 || 0 , 0 : ERROR : UNKNOWN-ERROR
-             37 , 54221 : ERROR : UNKNOWN-ERROR
-          55753 , 54112 : ERROR : HIDDEN-USER 
+             37 , 54221 : ERROR : UNKNOWN-ERROR ||
+          55753 , 54112 : ERROR : HIDDEN-USER  ||
   [!] Errors suppressed on full scan!
   ```
